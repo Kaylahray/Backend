@@ -26,6 +26,7 @@ jest.mock('@stellar/stellar-sdk', () => ({
   Networks: {
     PUBLIC: 'Public Global Stellar Network ; September 2015',
     TESTNET: 'Test SDF Network ; September 2015',
+    FUTURENET: 'Test SDF Future Network ; October 2022',
   },
   Transaction: jest.fn(),
   TransactionBuilder: jest.fn(),
@@ -38,6 +39,7 @@ import {
   getAgentKeypair,
   submitTransaction,
   waitForConfirmation,
+  resolveNetworkPassphrase,
 } from '../../../src/stellar/client';
 
 describe('Stellar Client', () => {
@@ -73,16 +75,50 @@ describe('Stellar Client', () => {
     });
   });
 
+  // ── resolveNetworkPassphrase ───────────────────────────────────────────────
+
+  describe('resolveNetworkPassphrase()', () => {
+    it('returns PUBLIC passphrase for mainnet', () => {
+      expect(resolveNetworkPassphrase('mainnet')).toBe(
+        'Public Global Stellar Network ; September 2015',
+      );
+    });
+
+    it('returns TESTNET passphrase for testnet', () => {
+      expect(resolveNetworkPassphrase('testnet')).toBe(
+        'Test SDF Network ; September 2015',
+      );
+    });
+
+    it('returns FUTURENET passphrase for futurenet', () => {
+      expect(resolveNetworkPassphrase('futurenet')).toBe(
+        'Test SDF Future Network ; October 2022',
+      );
+    });
+
+    it('throws for unknown network value', () => {
+      expect(() => resolveNetworkPassphrase('badnet')).toThrow(
+        'Unknown STELLAR_NETWORK: "badnet"',
+      );
+    });
+
+    it('throws for undefined network value', () => {
+      expect(() => resolveNetworkPassphrase(undefined)).toThrow(
+        'Unknown STELLAR_NETWORK',
+      );
+    });
+  });
+
   // ── getAgentKeypair ───────────────────────────────────────────────────────
 
   describe('getAgentKeypair()', () => {
-    it('returns a keypair when STELLAR_AGENT_SECRET is configured', () => {
-      process.env.STELLAR_AGENT_SECRET = 'SMOCK_SECRET_KEY_FOR_TESTS_ONLY';
+    it('returns a keypair when STELLAR_AGENT_SECRET_KEY is configured', () => {
+      process.env.STELLAR_AGENT_SECRET_KEY = 'SMOCK_SECRET_KEY_FOR_TESTS_ONLY';
       expect(() => getAgentKeypair()).not.toThrow();
     });
 
     it('the returned keypair exposes publicKey()', () => {
-      process.env.STELLAR_AGENT_SECRET = 'SMOCK_SECRET_KEY_FOR_TESTS_ONLY';
+      process.env.STELLAR_AGENT_SECRET_KEY = 'SMOCK_SECRET_KEY_FOR_TESTS_ONLY';
       const keypair = getAgentKeypair();
       expect(typeof keypair.publicKey()).toBe('string');
     });

@@ -8,9 +8,22 @@ import {
 import { TransactionResult } from './types';
 
 const RPC_URL = process.env.STELLAR_RPC_URL || 'https://soroban-testnet.stellar.org';
-const NETWORK_PASSPHRASE = process.env.STELLAR_NETWORK === 'mainnet' 
-  ? Networks.PUBLIC 
-  : Networks.TESTNET;
+export function resolveNetworkPassphrase(network: string | undefined): string {
+  switch (network?.toLowerCase()) {
+    case 'mainnet':
+      return Networks.PUBLIC;
+    case 'testnet':
+      return Networks.TESTNET;
+    case 'futurenet':
+      return Networks.FUTURENET;
+    default:
+      throw new Error(
+        `Unknown STELLAR_NETWORK: "${network}". Expected "mainnet", "testnet", or "futurenet".`
+      );
+  }
+}
+
+const NETWORK_PASSPHRASE = resolveNetworkPassphrase(process.env.STELLAR_NETWORK);
 
 let agentKeypair: Keypair | null = null;
 let rpcServer: rpc.Server | null = null;
@@ -37,9 +50,9 @@ export function getNetworkPassphrase(): string {
  */
 export function getAgentKeypair(): Keypair {
   if (!agentKeypair) {
-    const secret = process.env.STELLAR_AGENT_SECRET;
+    const secret = process.env.STELLAR_AGENT_SECRET_KEY;
     if (!secret) {
-      throw new Error('STELLAR_AGENT_SECRET not configured');
+      throw new Error('STELLAR_AGENT_SECRET_KEY not configured');
     }
     agentKeypair = Keypair.fromSecret(secret);
   }
